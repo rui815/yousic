@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+# ★ 追記: 環境変数とDB接続用ライブラリをインポート
+import os
+import dj_database_url
+from datetime import timedelta # Simple JWTは元のコードにあり
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +24,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-qc%5-12x6*)qfsw_xbdq2$&2617!lh6!^w^kynb3xwvn^@wxkv'
+# ★ 修正: 環境変数から読み込む
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-qc%5-12x6*)qfsw_xbdq2$&2617!lh6!^w^kynb3xwvn^@wxkv')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# ★ 修正: 環境変数から読み込む (Renderでは通常Falseにする)
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+# ★ 修正: DisallowedHostエラー解消のため、環境変数からホスト名を読み込む
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -37,12 +44,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',  # DRFの追加
-    'accounts',        # 作成したアプリケーションの追加
+    'rest_framework',      # DRFの追加
+    'accounts',            # 作成したアプリケーションの追加
+    # simplejwtのモジュールをここに追記する必要があるかもしれません。
+    # 以前のエラーログから、他のパッケージと一緒にインストールされることを前提とします。
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # ★ 追記: WhiteNoiseを適用 (SecurityMiddlewareの直後)
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,11 +85,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# ★ 修正: RenderのPostgreSQL接続情報（DATABASE_URL）を環境変数から読み込む
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3',  # 環境変数がなければローカル用SQLite
+        conn_max_age=600  # 接続の最大寿命 (Render向け)
+    )
 }
 
 
@@ -117,6 +129,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# ★ 追記: collectstaticで静的ファイルをまとめる場所 (WhiteNoiseが利用)
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
+STATICFILES_DIRS = [
+    # BASE_DIR / "static", # プロジェクト内で静的ファイルを置く場所があれば追記
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -142,7 +160,7 @@ REST_FRAMEWORK = {
 }
 
 # Simple JWT の設定
-from datetime import timedelta
+# from datetime import timedelta # ファイル先頭に移動済み
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1), # アクセストークンの有効期限
