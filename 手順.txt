@@ -1,0 +1,23 @@
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1　アクティブにするやつ
+deactivate
+Django
+仮想環境は作業を独立させ別のプロジェクトとバージョンの違いによる衝突を避けるために使う。
+
+python manage.py runserver
+登録:http://127.0.0.1:8000/api/accounts/register/
+ログイン:http://127.0.0.1:8000/api/token/
+
+フォロー: (例: IDが2のユーザーをフォロー)
+URL: http://127.0.0.1:8000/api/accounts/follow/2/toggle/
+Method: POST
+Headers: Authorization: Bearer <access_token>
+
+アンフォロー: (例: IDが2のユーザーをアンフォロー)
+URL: http://127.0.0.1:8000/api/accounts/follow/2/toggle/
+Method: DELETE
+Headers: Authorization: Bearer <access_token>
+
+
+フロントエンド:アプリやwebサイトの見えている部分
+バックエンド:リクエストを受け取り、処理を行い、結果をJSON形式のデータとしてフロントエンドに返す場所
