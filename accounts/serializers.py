@@ -3,15 +3,17 @@
 from rest_framework import serializers
 from .models import CustomUser, Follow
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # ユーザー登録用シリアライザ
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True) # パスワードは読み取り不可にする
+    token = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
-        # 登録に必要なフィールドを指定
-        fields = ('id', 'username', 'email', 'password')
+        # fieldsに 'token' を追加
+        fields = ('id', 'username', 'email', 'password', 'token')
 
     # パスワードをハッシュ化して保存するためのカスタムcreateメソッド
     def create(self, validated_data):
@@ -21,6 +23,15 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+    
+    # 'token' フィールドの値を計算して返すメソッド
+    def get_token(self, user):
+        # ユーザーオブジェクトを受け取り、RefreshTokenとAccessTokenを生成
+        refresh = RefreshToken.for_user(user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 # ユーザー情報表示用シリアライザ
 class UserSerializer(serializers.ModelSerializer):
