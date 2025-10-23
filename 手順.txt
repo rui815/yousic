@@ -21,3 +21,8 @@ Headers: Authorization: Bearer <access_token>
 
 フロントエンド:アプリやwebサイトの見えている部分
 バックエンド:リクエストを受け取り、処理を行い、結果をJSON形式のデータとしてフロントエンドに返す場所
+
+メインを変更
+git add .
+git commit -m "Fix package name in requirements.txt"
+git push origin main
