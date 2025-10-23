@@ -169,3 +169,4 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     # ... その他はデフォルト設定でOK
 }
+##
