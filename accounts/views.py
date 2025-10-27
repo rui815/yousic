@@ -11,6 +11,15 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import permissions
 
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+
+# Spotify連携ファイルのインポート
+from .spotify_fetcher import get_track_info_for_user
+from .serializers import CurrentTrackSerializer # 新しく追加したSerializer
+
 # ユーザー登録API
 class UserRegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -82,3 +91,36 @@ class FollowingListView(generics.ListAPIView):
     def get_queryset(self):
         # リクエストユーザーがフォローしているユーザー（following）のリストを返す
         return CustomUser.objects.filter(follower_set__follower=self.request.user)
+    
+class CurrentTrackView(APIView):
+    """
+    認証済みユーザーの現在再生中のSpotifyトラック、または直近再生した曲を取得する。
+    GET /api/accounts/spotify/track/
+    """
+    permission_classes = [IsAuthenticated] # ログインユーザーのみアクセス可能
+
+    def get(self, request, *args, **kwargs):
+        # 現在ログインしているDjangoユーザーのID (pk) をSpotifyのユーザーIDとして使用する
+        user_id = request.user.pk
+        
+        # 曲情報取得関数を呼び出す
+        track_data = get_track_info_for_user(user_id)
+        
+        # トークン切れなどでエラーが返された場合の処理
+        if track_data and track_data.get('error'):
+            # 例: トークン期限切れのエラーメッセージを返す
+            return Response(
+                {"detail": track_data['message'], "error_type": "auth_error"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # シリアライザーでデータを整形
+        serializer = CurrentTrackSerializer(track_data)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ★ 注意: 実際のOAuth認証プロセスを開始するViewも必要ですが、
+# シンプルにするため、ここではトラック取得APIのみを実装しました。
+# ユーザーは事前にclient_auth.pyの認証ロジックをスタンドアロンで実行し、
+# .cache/<Django_User_ID>.json の形でキャッシュファイルを作成しておく必要があります。

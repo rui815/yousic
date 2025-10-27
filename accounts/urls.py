@@ -15,4 +15,7 @@ urlpatterns = [
     path('follow/<int:user_id>/toggle/', views.FollowToggleView.as_view(), name='follow_toggle'),
     # フォローしているユーザー一覧
     path('following/', views.FollowingListView.as_view(), name='following_list'),
+
+    # --- Spotify連携APIエンドポイントの追加 ---
+    path('spotify/track/', views.CurrentTrackView.as_view(), name='spotify_current_track'),
 ]
