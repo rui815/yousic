@@ -17,7 +17,7 @@ Including another URLconf
 # config/urls.py
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include # 'include' がインポートされていることを確認
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -25,10 +25,17 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # JWT 認証のためのエンドポイント
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # ログイン（トークン取得）
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # トークン更新
     
-    # accounts アプリのルーティング
-    path('api/accounts/', include('accounts.urls')),
+    # --- 認証 (Simple JWT) ---
+    # POST /api/token/ (ログイン)
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # POST /api/token/refresh/
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # --- アプリケーション ---
+    # 'accounts.urls' という文字列を渡す
+    path('accounts/', include('accounts.urls')), 
+    
+    # 'music.urls' という文字列を渡す
+    path('music/', include('music.urls')), 
 ]

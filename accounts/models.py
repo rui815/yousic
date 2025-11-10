@@ -5,7 +5,12 @@ class CustomUser(AbstractUser):
     # AbstractUserが提供するフィールド（username, email, passwordなど）に加え、
     # 必要に応じて追加のフィールドを定義できます。
     # 例: bio = models.TextField(blank=True)
-    pass
+    
+    # ★ 追記: Spotify API用のトークンを保存するフィールド
+    # Swift側で認証後、/accounts/me/ (UserDetailView) にPATCHリクエストで保存することを想定
+    spotify_access_token = models.CharField(max_length=500, blank=True, null=True)
+    spotify_refresh_token = models.CharField(max_length=500, blank=True, null=True)
+    spotify_token_expires_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.username

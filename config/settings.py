@@ -14,10 +14,14 @@ from pathlib import Path
 # ★ 追記: 環境変数とDB接続用ライブラリをインポート
 import os
 import dj_database_url
-from datetime import timedelta # Simple JWTは元のコードにあり
+from datetime import timedelta # Simple JWTは元のコード
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -46,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',      # DRFの追加
     'accounts',            # 作成したアプリケーションの追加
+    'music',
     # simplejwtのモジュールをここに追記する必要があるかもしれません。
     # 以前のエラーログから、他のパッケージと一緒にインストールされることを前提とします。
 ]
