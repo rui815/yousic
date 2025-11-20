@@ -74,3 +74,20 @@ class FollowSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You are already following this user.")
             
         return data
+    
+
+# ★ 追加: 自分の詳細情報（読み書き用）シリアライザ
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        # Spotifyトークンを読み書きできるようにフィールドを追加
+        fields = (
+            'id', 
+            'username', 
+            'email', 
+            'spotify_access_token', 
+            'spotify_refresh_token', 
+            'spotify_token_expires_at'
+        )
+        # idとusernameは変更できないようにする
+        read_only_fields = ('id', 'username')
