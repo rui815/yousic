@@ -3,7 +3,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .models import CustomUser, Follow
-from .serializers import UserRegisterSerializer, UserSerializer, FollowSerializer
+from .serializers import UserRegisterSerializer, UserSerializer, FollowSerializer, UserDetailSerializer
 from django.shortcuts import get_object_or_404
 
 from rest_framework.views import APIView # APIViewをインポート
@@ -24,7 +24,7 @@ class UserRegisterView(generics.CreateAPIView):
 
 # 自分のユーザー情報表示/更新API
 class UserDetailView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserSerializer
+    serializer_class = UserDetailSerializer
     # 認証済みユーザーのみアクセス可能
     permission_classes = [permissions.IsAuthenticated]
 
