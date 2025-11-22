@@ -21,3 +21,15 @@ class SongShare(models.Model):
 
     def __str__(self):
         return f"{self.user.username} shared {self.track_name}"
+
+class SpotifyAuthState(models.Model):
+    """
+    Spotify認証のコールバックが戻ってきたときに、
+    どのユーザーのリクエストだったかを特定するための一時的なState保存用
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    state = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"State for {self.user.username}"   
