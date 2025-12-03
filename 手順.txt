@@ -24,7 +24,7 @@ Headers: Authorization: Bearer <access_token>
 
 
 ブランチを移動して作業する
-git chechout <ブランチ名> #ブランチ名に移動する
+git checkout -B <ブランチ名> origin/<ブランチ名> #ブランチ名に移動する
 
 変更後保存したら
 git add .

@@ -174,4 +174,5 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     # ... その他はデフォルト設定でOK
 }
-##コメント
+
+CSRF_TRUSTED_ORIGINS = ['https://*.trycloudflare.com']
