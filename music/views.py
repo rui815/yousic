@@ -10,6 +10,8 @@ from accounts.models import CustomUser # フォロー関係の取得に利用
 # Spotify APIライブラリ
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from spotipy.cache_handler import MemoryCacheHandler
+
 from django.utils import timezone
 from datetime import timedelta # トークンの有効期限計算用
 import os # .env ファイル読み込み用
@@ -189,22 +191,21 @@ class SpotifyLoginView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # 1. ランダムな state 文字列を生成
         state = str(uuid.uuid4())
-        
-        # 2. state とユーザーを紐付けてDBに保存
         SpotifyAuthState.objects.create(user=request.user, state=state)
         
-        # 3. SpotifyOAuth オブジェクトを作成
         sp_oauth = SpotifyOAuth(
             client_id=os.environ.get('SPOTIPY_CLIENT_ID'),
             client_secret=os.environ.get('SPOTIPY_CLIENT_SECRET'),
             redirect_uri=os.environ.get('SPOTIPY_REDIRECT_URI'),
             scope="user-read-currently-playing user-read-recently-played",
-            state=state # ここでstateをセットするのが重要
+            state=state,
+            # ★ 修正: 毎回必ずログイン画面（承認画面）を表示させる設定
+            show_dialog=True,
+            # ★ 修正: サーバー上にキャッシュファイルを作らない設定
+            cache_handler=MemoryCacheHandler()
         )
         
-        # 4. 認証URLを取得
         auth_url = sp_oauth.get_authorize_url()
         
         return Response({"url": auth_url})
@@ -213,8 +214,6 @@ class SpotifyLoginView(APIView):
 def spotify_callback(request):
     """
     Step 2: Spotifyでの認証後、ここに戻ってくる (Callback)。
-    認証コード(code)を使ってトークンを取得し、ユーザーに紐付ける。
-    ※これはAPIViewではなく、通常のDjango Viewとして実装（ブラウザリダイレクトのため）
     """
     code = request.GET.get('code')
     state = request.GET.get('state')
@@ -230,8 +229,6 @@ def spotify_callback(request):
         # 1. Stateを使って、リクエストしたユーザーを特定
         auth_state = SpotifyAuthState.objects.get(state=state)
         user = auth_state.user
-        
-        # (用済みのstateは削除)
         auth_state.delete()
 
         # 2. トークンを交換
@@ -239,7 +236,9 @@ def spotify_callback(request):
             client_id=os.environ.get('SPOTIPY_CLIENT_ID'),
             client_secret=os.environ.get('SPOTIPY_CLIENT_SECRET'),
             redirect_uri=os.environ.get('SPOTIPY_REDIRECT_URI'),
-            scope="user-read-currently-playing user-read-recently-played"
+            scope="user-read-currently-playing user-read-recently-played",
+            # ★ 修正: サーバー上にキャッシュファイルを作らない設定
+            cache_handler=MemoryCacheHandler()
         )
         
         token_info = sp_oauth.get_access_token(code)
@@ -250,7 +249,6 @@ def spotify_callback(request):
         user.spotify_token_expires_at = timezone.now() + timedelta(seconds=token_info['expires_in'])
         user.save()
         
-        # 4. 成功メッセージを表示 (またはアプリにリダイレクト)
         return HttpResponse("<h1>Spotify連携が完了しました！</h1><p>このウィンドウを閉じてアプリに戻ってください。</p>")
 
     except SpotifyAuthState.DoesNotExist:
